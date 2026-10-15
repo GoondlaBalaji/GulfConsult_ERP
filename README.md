@@ -4,6 +4,7 @@
 ![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+[![CI/CD Pipeline](https://github.com/GoondlaBalaji/GulfConsult_ERP/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/GoondlaBalaji/GulfConsult_ERP/actions/workflows/ci-cd.yml)
 ![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
 A modern, high-performance web-based Enterprise Resource Planning (ERP) suite engineered for **Gulf Consult**. The system unifies Human Resource Management (HRMS), Time Sheet Management (TSMS), and Automated Payroll into a cohesive, secure, and intuitive digital workspace.
@@ -125,6 +126,21 @@ All relational database scripts are available in the [`SQL Scripts`](./SQL%20Scr
 5. Click **Deploy**.
 
 *Production routing rewrites are pre-configured in `vercel.json`.*
+
+## 🔄 CI / CD Pipeline
+
+The repository includes an automated GitHub Actions workflow (`.github/workflows/ci-cd.yml`):
+
+- **Continuous Integration (CI)**:
+  - Triggers on every push & pull request to `main`.
+  - Runs in a clean Ubuntu container using Node.js 20.x with package caching.
+  - Automatically verifies dependency integrity with `npm ci`.
+  - Validates SQL schema files in `SQL Scripts/` (`HRMS.sql`, `TSMS.sql`, `Payroll.sql`, `Seed_Data.sql`).
+  - Executes production build verification (`npm run build`).
+  - Stores production build artifacts for 7 days.
+- **Continuous Deployment (CD)**:
+  - Automatically deploys the production build to **GitHub Pages** upon every successful push to `main`.
+  - Seamlessly integrates with **Vercel** / **Netlify** for instant production preview and production branches.
 
 ---
 
