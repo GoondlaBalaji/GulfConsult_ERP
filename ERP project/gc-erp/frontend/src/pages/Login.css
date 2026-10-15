@@ -138,6 +138,16 @@
     text-transform: none !important;
 }
 
+.acme-body-wrapper .sign-up-container input {
+    height: 2.3rem;
+    margin: 0.28rem 0;
+}
+
+.acme-body-wrapper .sign-up-container button#send_code {
+    margin: 0.35rem 0;
+    padding: 0.35rem 0.8rem;
+}
+
 .acme-body-wrapper .form-container input::placeholder,
 .acme-body-wrapper input::placeholder {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;

@@ -20,8 +20,9 @@ export default function Login() {
   // Sign Up Form State
   const [signUpData, setSignUpData] = useState({
     username: '',
-    password: '',
     email: '',
+    password: '',
+    confirmPassword: '',
     code: '',
   });
 
@@ -70,8 +71,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      if (!signUpData.username || !signUpData.password || !signUpData.email) {
+      if (!signUpData.username || !signUpData.email || !signUpData.password || !signUpData.confirmPassword) {
         throw new Error('Please fill in all fields.');
+      }
+      if (signUpData.password !== signUpData.confirmPassword) {
+        throw new Error('Passwords do not match. Please re-enter your password.');
+      }
+      if (signUpData.password.length < 6) {
+        throw new Error('Password must be at least 6 characters long.');
       }
       await register({
         username_vc: signUpData.username,
@@ -139,6 +146,13 @@ export default function Login() {
               onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
             />
             <input
+              type="email"
+              required
+              placeholder="Official Email"
+              value={signUpData.email}
+              onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+            />
+            <input
               type="password"
               required
               placeholder="Password"
@@ -146,11 +160,11 @@ export default function Login() {
               onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
             />
             <input
-              type="email"
+              type="password"
               required
-              placeholder="Email"
-              value={signUpData.email}
-              onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+              placeholder="Confirm Password"
+              value={signUpData.confirmPassword}
+              onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
             />
 
             <button type="button" id="send_code" onClick={handleSendCode}>
