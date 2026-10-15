@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 import './Login.css';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login } = useAuth();
 
   // Sliding 2D translation panel state matching acmenlei/login-form
   // false = Sign In active, true = Sign Up (right-panel-active)
@@ -27,7 +28,9 @@ export default function Login() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
   const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
   const [codeSent, setCodeSent] = useState(false);
 
   // Quick 1-click Demo credentials
@@ -40,6 +43,7 @@ export default function Login() {
   const handleSignIn = async (e) => {
     e.preventDefault();
     setError('');
+    setInfoMessage('');
     setLoading(true);
 
     try {
@@ -52,22 +56,36 @@ export default function Login() {
     }
   };
 
-  // Send Verification Code
-  const handleSendCode = (e) => {
+  // Send Real Verification Code via Email
+  const handleSendCode = async (e) => {
     e.preventDefault();
-    if (!signUpData.email) {
-      setError('Please enter your email first.');
+    if (!signUpData.email || !signUpData.email.includes('@')) {
+      setError('Please enter a valid official email first.');
       return;
     }
     setError('');
-    setCodeSent(true);
-    setSignUpData((prev) => ({ ...prev, code: '882196' }));
+    setInfoMessage('');
+    setSendingCode(true);
+
+    try {
+      const res = await api.sendRegisterOtp(signUpData.email);
+      setCodeSent(true);
+      setInfoMessage(res.message || 'Verification code sent to your email.');
+      if (res.simulated && res.otpPreview) {
+        setSignUpData((prev) => ({ ...prev, code: res.otpPreview }));
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to dispatch verification email.');
+    } finally {
+      setSendingCode(false);
+    }
   };
 
   // Sign Up Submit
   const handleSignUp = async (e) => {
     e.preventDefault();
     setError('');
+    setInfoMessage('');
     setLoading(true);
 
     try {
@@ -80,14 +98,19 @@ export default function Login() {
       if (signUpData.password.length < 6) {
         throw new Error('Password must be at least 6 characters long.');
       }
-      await register({
-        username_vc: signUpData.username,
-        password_vc: signUpData.password,
-        email_vc: signUpData.email,
-        empname_vc: signUpData.username,
-        ecode_nu: '1008',
-        role_vc: 'Employee',
+      if (!signUpData.code) {
+        throw new Error('Please enter the 6-digit verification code sent to your email.');
+      }
+
+      await api.register({
+        username: signUpData.username,
+        email: signUpData.email,
+        password: signUpData.password,
+        confirmPassword: signUpData.confirmPassword,
+        code: signUpData.code,
       });
+
+      // Automatically log the newly registered user in
       await login(signUpData.username, signUpData.password);
       navigate('/dashboard');
     } catch (err) {
@@ -167,8 +190,12 @@ export default function Login() {
               onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
             />
 
-            <button type="button" id="send_code" onClick={handleSendCode}>
-              {codeSent ? 'Code Sent (882196)' : 'Send Code'}
+            {infoMessage && isRightPanelActive && (
+              <span style={{ color: '#059669', fontSize: '11px', margin: '2px 0' }}>{infoMessage}</span>
+            )}
+
+            <button type="button" id="send_code" onClick={handleSendCode} disabled={sendingCode}>
+              {sendingCode ? 'Sending OTP...' : codeSent ? 'Resend Code' : 'Send Code'}
             </button>
 
             <input

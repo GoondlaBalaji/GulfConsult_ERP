@@ -27,6 +27,28 @@ export const api = {
     return data;
   },
 
+  async sendRegisterOtp(email) {
+    const res = await fetch(`${API_BASE_URL}/auth/send-register-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to send OTP code.');
+    return data;
+  },
+
+  async register(formData) {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Registration failed.');
+    return data;
+  },
+
   async verifyOtp(username, otp) {
     const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
       method: 'POST',
