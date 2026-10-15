@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, 
   UserPlus, 
@@ -10,15 +10,35 @@ import {
   UserCheck, 
   ShieldAlert,
   SlidersHorizontal,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react';
 import { getStoredUsers } from '../services/mockAuth';
+import { api } from '../services/api';
 import PageHeader from '../components/common/PageHeader';
 
 export default function Users() {
-  const users = getStoredUsers();
+  const [users, setUsers] = useState(() => getStoredUsers());
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const res = await api.getUsers();
+        if (res && res.users && res.users.length > 0) {
+          setUsers(res.users);
+        }
+      } catch (err) {
+        console.warn('API users fetch fallback to stored:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const metricCards = [
     { 

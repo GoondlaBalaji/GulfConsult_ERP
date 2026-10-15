@@ -290,3 +290,30 @@ exports.getUsers = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+exports.updateUserStatus = async (req, res) => {
+  const { id } = req.params;
+  const { active } = req.body;
+  try {
+    await pool.query('UPDATE Sec_Users SET active_int = ? WHERE user_id = ?', [active ? 1 : 0, id]);
+    return res.json({ success: true, message: `User status updated to ${active ? 'Active' : 'Inactive'}` });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.updateUserRole = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  const validRoles = ['System Administrator', 'HR Manager', 'Project Manager', 'Finance Controller', 'Employee'];
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({ success: false, message: 'Invalid enterprise role specified.' });
+  }
+  try {
+    await pool.query('UPDATE Sec_Users SET role_vc = ? WHERE user_id = ?', [role, id]);
+    return res.json({ success: true, message: `User role updated to ${role}` });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+

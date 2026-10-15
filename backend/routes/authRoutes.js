@@ -9,5 +9,8 @@ router.post('/register', authController.register);
 router.post('/verify-otp', authController.verifyOtp);
 router.get('/me', authenticateToken, authController.getMe);
 router.get('/users', authenticateToken, requireRole('System Administrator'), authController.getUsers);
+router.patch('/users/:id/status', authenticateToken, requireRole('System Administrator'), authController.updateUserStatus);
+router.patch('/users/:id/role', authenticateToken, requireRole('System Administrator'), authController.updateUserRole);
 
 module.exports = router;
+

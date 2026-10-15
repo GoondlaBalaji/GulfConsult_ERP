@@ -13,11 +13,15 @@ import {
   Settings,
   ChevronDown,
   Building,
-  ChevronsLeft
+  ChevronsLeft,
+  ShieldCheck,
+  UserCog
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
   const location = useLocation();
+  const { currentUser } = useAuth();
   const [openMenus, setOpenMenus] = useState({
     hrms: true,
     reports: false,
@@ -27,6 +31,12 @@ export default function Sidebar({ isOpen, setIsOpen }) {
     setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // Enterprise Role-Based Access Evaluation
+  const currentRole = currentUser?.role_vc || currentUser?.role || 'System Administrator';
+  const isAdmin = currentRole === 'System Administrator';
+  const isHR = isAdmin || currentRole === 'HR Manager';
+  const isPM = isAdmin || currentRole === 'Project Manager';
+
   return (
     <aside
       className={`fixed top-0 left-0 bottom-0 z-30 w-60 bg-white border-r border-[#e8ecf2] flex flex-col justify-between transition-all duration-300 ${
@@ -35,19 +45,32 @@ export default function Sidebar({ isOpen, setIsOpen }) {
     >
       {/* Top: Logo & Company Name */}
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="h-16 px-5 flex items-center border-b border-[#eef2f6]">
-          <div className="flex items-center gap-3">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-[#eef2f6]">
+          <div className="flex items-center gap-3 min-w-0">
             {/* Official Gulf Consult Logo Mark */}
             <img
               src="/gc-logo.png"
               alt="Gulf Consult Logo"
               className="w-9 h-9 rounded-lg object-contain shadow-xs shrink-0"
             />
-            <div>
+            <div className="min-w-0">
               <h2 className="font-bold text-sm text-[#0f172a] tracking-tight leading-tight">GC ERP</h2>
-              <span className="text-[10px] text-[#64748b] font-normal leading-tight">Gulf Consult Enterprise</span>
+              <span className="text-[10px] text-[#64748b] font-normal leading-tight block truncate">Gulf Consult Enterprise</span>
             </div>
           </div>
+          <span 
+            className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 border ${
+              isAdmin 
+                ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                : isHR 
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                : isPM 
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                : 'bg-slate-50 text-slate-600 border-slate-200'
+            }`}
+          >
+            {isAdmin ? 'Admin' : isHR ? 'HR Mgr' : isPM ? 'PM' : 'Emp'}
+          </span>
         </div>
 
         {/* Navigation Menu */}
@@ -82,190 +105,182 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           </div>
 
           {/* SECTION: PEOPLE */}
-          <div className="space-y-1">
-            <p className="px-3.5 text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">
-              PEOPLE
-            </p>
+          {(isHR || isPM) && (
+            <div className="space-y-1">
+              <p className="px-3.5 text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">
+                PEOPLE & OPERATIONS
+              </p>
 
-            {/* Employees */}
-            <NavLink
-              to="/employees"
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
-                  isActive
-                    ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
-                    : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
-                }`
-              }
-            >
-              {location.pathname === '/employees' && (
-                <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#2563eb] rounded-r-md" />
+              {/* Employees - HR & Admin Only */}
+              {isHR && (
+                <NavLink
+                  to="/employees"
+                  onClick={() => setIsOpen(false)}
+                  className={({ isActive }) =>
+                    `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
+                      isActive
+                        ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
+                        : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
+                    }`
+                  }
+                >
+                  {location.pathname === '/employees' && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#2563eb] rounded-r-md" />
+                  )}
+                  <div className="flex items-center gap-3">
+                    <Users
+                      className={`w-4 h-4 ${
+                        location.pathname === '/employees' ? 'text-[#2563eb]' : 'text-[#64748b]'
+                      }`}
+                    />
+                    <span>Employees</span>
+                  </div>
+                </NavLink>
               )}
-              <div className="flex items-center gap-3">
-                <Users
-                  className={`w-4 h-4 ${
-                    location.pathname === '/employees' ? 'text-[#2563eb]' : 'text-[#64748b]'
-                  }`}
-                />
-                <span>Employees</span>
-              </div>
-            </NavLink>
 
-            {/* HR Management with submenus */}
-            <div>
-              <button
-                onClick={() => toggleSubmenu('hrms')}
-                className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium transition-colors ${
-                  openMenus.hrms ? 'text-[#0f172a] bg-[#f8fafc]' : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc]'
-                }`}
+              {/* HR Management with submenus - HR & Admin Only */}
+              {isHR && (
+                <div>
+                  <button
+                    onClick={() => toggleSubmenu('hrms')}
+                    className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium transition-colors ${
+                      openMenus.hrms ? 'text-[#0f172a] bg-[#f8fafc]' : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <UserCheck className="w-4 h-4 text-[#64748b]" />
+                      <span>HR Management</span>
+                    </div>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform text-[#94a3b8] ${
+                        openMenus.hrms ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {openMenus.hrms && (
+                    <div className="pl-9 pr-2 space-y-0.5 py-1">
+                      <NavLink
+                        to="/job-openings"
+                        className={({ isActive }) =>
+                          `block px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
+                            isActive
+                              ? 'text-[#2563eb] bg-[#eff6ff] font-semibold'
+                              : 'text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc]'
+                          }`
+                        }
+                      >
+                        Job Openings
+                      </NavLink>
+                      <NavLink
+                        to="/new-joiners"
+                        className={({ isActive }) =>
+                          `block px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
+                            isActive
+                              ? 'text-[#2563eb] bg-[#eff6ff] font-semibold'
+                              : 'text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc]'
+                          }`
+                        }
+                      >
+                        New Joiners
+                      </NavLink>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Payroll - HR & Admin Only */}
+              {isHR && (
+                <NavLink
+                  to="/payroll"
+                  onClick={() => setIsOpen(false)}
+                  className={({ isActive }) =>
+                    `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
+                      isActive
+                        ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
+                        : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
+                    }`
+                  }
+                >
+                  {location.pathname === '/payroll' && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#2563eb] rounded-r-md" />
+                  )}
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="w-4 h-4 text-[#64748b]" />
+                    <span>Payroll</span>
+                  </div>
+                </NavLink>
+              )}
+
+              {/* Timesheets (TSMS) - PM, HR & Admin */}
+              <NavLink
+                to="/timesheets"
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) =>
+                  `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
+                    isActive
+                      ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
+                      : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
+                  }`
+                }
+              >
+                {location.pathname === '/timesheets' && (
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#2563eb] rounded-r-md" />
+                )}
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-[#64748b]" />
+                  <span>Timesheets (TSMS)</span>
+                </div>
+              </NavLink>
+
+              {/* Projects - PM, HR & Admin */}
+              <NavLink
+                to="/projects"
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) =>
+                  `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
+                    isActive
+                      ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
+                      : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
+                  }`
+                }
+              >
+                {location.pathname === '/projects' && (
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#2563eb] rounded-r-md" />
+                )}
+                <div className="flex items-center gap-3">
+                  <FolderKanban className="w-4 h-4 text-[#64748b]" />
+                  <span>Projects</span>
+                </div>
+              </NavLink>
+            </div>
+          )}
+
+          {/* SECTION: FINANCE - HR & Admin Only */}
+          {isHR && (
+            <div className="space-y-1">
+              <p className="px-3.5 text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">
+                FINANCE & COMPENSATION
+              </p>
+
+              <NavLink
+                to="/allowances"
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) =>
+                  `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
+                    isActive
+                      ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
+                      : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
+                  }`
+                }
               >
                 <div className="flex items-center gap-3">
-                  <UserCheck className="w-4 h-4 text-[#64748b]" />
-                  <span>HR Management</span>
+                  <BarChart3 className="w-4 h-4 text-[#64748b]" />
+                  <span>Allowances & Deductions</span>
                 </div>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform text-[#94a3b8] ${
-                    openMenus.hrms ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-
-              {openMenus.hrms && (
-                <div className="pl-9 pr-2 space-y-0.5 py-1">
-                  <NavLink
-                    to="/job-openings"
-                    className={({ isActive }) =>
-                      `block px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
-                        isActive
-                          ? 'text-[#2563eb] bg-[#eff6ff] font-semibold'
-                          : 'text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc]'
-                      }`
-                    }
-                  >
-                    Job Openings
-                  </NavLink>
-                  <NavLink
-                    to="/new-joiners"
-                    className={({ isActive }) =>
-                      `block px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
-                        isActive
-                          ? 'text-[#2563eb] bg-[#eff6ff] font-semibold'
-                          : 'text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc]'
-                      }`
-                    }
-                  >
-                    New Joiners
-                  </NavLink>
-                </div>
-              )}
+              </NavLink>
             </div>
-
-            {/* Payroll */}
-            <NavLink
-              to="/payroll"
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
-                  isActive
-                    ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
-                    : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
-                }`
-              }
-            >
-              {location.pathname === '/payroll' && (
-                <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#2563eb] rounded-r-md" />
-              )}
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-4 h-4 text-[#64748b]" />
-                <span>Payroll</span>
-              </div>
-            </NavLink>
-
-            {/* Timesheets (TSMS) */}
-            <NavLink
-              to="/timesheets"
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
-                  isActive
-                    ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
-                    : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
-                }`
-              }
-            >
-              {location.pathname === '/timesheets' && (
-                <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#2563eb] rounded-r-md" />
-              )}
-              <div className="flex items-center gap-3">
-                <Calendar className="w-4 h-4 text-[#64748b]" />
-                <span>Timesheets (TSMS)</span>
-              </div>
-            </NavLink>
-
-            {/* Projects */}
-            <NavLink
-              to="/projects"
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
-                  isActive
-                    ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
-                    : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
-                }`
-              }
-            >
-              {location.pathname === '/projects' && (
-                <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#2563eb] rounded-r-md" />
-              )}
-              <div className="flex items-center gap-3">
-                <FolderKanban className="w-4 h-4 text-[#64748b]" />
-                <span>Projects</span>
-              </div>
-            </NavLink>
-          </div>
-
-          {/* SECTION: FINANCE */}
-          <div className="space-y-1">
-            <p className="px-3.5 text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">
-              FINANCE
-            </p>
-
-            <NavLink
-              to="/allowances"
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
-                  isActive
-                    ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
-                    : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
-                }`
-              }
-            >
-              <div className="flex items-center gap-3">
-                <BarChart3 className="w-4 h-4 text-[#64748b]" />
-                <span>Finance</span>
-              </div>
-            </NavLink>
-
-            <NavLink
-              to="/reports"
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) =>
-                `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
-                  isActive
-                    ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
-                    : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
-                }`
-              }
-            >
-              <div className="flex items-center gap-3">
-                <FileBarChart className="w-4 h-4 text-[#64748b]" />
-                <span>Reports</span>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8]" />
-            </NavLink>
-          </div>
+          )}
 
           {/* SECTION: SYSTEM */}
           <div className="space-y-1">
@@ -289,6 +304,32 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 <span>Documents</span>
               </div>
             </NavLink>
+
+            {/* Security Users - Exclusive to System Administrator */}
+            {isAdmin && (
+              <NavLink
+                to="/users"
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) =>
+                  `relative flex items-center justify-between px-3.5 py-2 rounded-xl text-xs transition-all ${
+                    isActive
+                      ? 'bg-[#eff6ff] text-[#2563eb] font-semibold'
+                      : 'text-[#475569] hover:text-[#0f172a] hover:bg-[#f8fafc] font-medium'
+                  }`
+                }
+              >
+                {location.pathname === '/users' && (
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#2563eb] rounded-r-md" />
+                )}
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-4 h-4 text-[#2563eb]" />
+                  <span>Security Accounts</span>
+                </div>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-200">
+                  Admin
+                </span>
+              </NavLink>
+            )}
 
             <NavLink
               to="/settings"

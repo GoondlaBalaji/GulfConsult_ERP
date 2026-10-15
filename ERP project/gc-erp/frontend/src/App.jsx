@@ -21,11 +21,20 @@ import Users from './pages/Users';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { isAuthenticated, currentUser } = useAuth();
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
+  if (allowedRoles && allowedRoles.length > 0) {
+    const userRole = currentUser?.role_vc || currentUser?.role;
+    // System Administrator has full superuser clearance across all modules
+    if (userRole !== 'System Administrator' && !allowedRoles.includes(userRole)) {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
   return children;
 };
 
@@ -49,17 +58,73 @@ export default function App() {
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="employees" element={<Employees />} />
-            <Route path="job-openings" element={<JobOpenings />} />
-            <Route path="new-joiners" element={<NewJoiners />} />
+            <Route 
+              path="employees" 
+              element={
+                <ProtectedRoute allowedRoles={['System Administrator', 'HR Manager']}>
+                  <Employees />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="job-openings" 
+              element={
+                <ProtectedRoute allowedRoles={['System Administrator', 'HR Manager']}>
+                  <JobOpenings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="new-joiners" 
+              element={
+                <ProtectedRoute allowedRoles={['System Administrator', 'HR Manager']}>
+                  <NewJoiners />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="documents" element={<Documents />} />
-            <Route path="projects" element={<Projects />} />
+            <Route 
+              path="projects" 
+              element={
+                <ProtectedRoute allowedRoles={['System Administrator', 'Project Manager', 'HR Manager']}>
+                  <Projects />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="time-tracking" element={<TimeTracking />} />
             <Route path="timesheets" element={<Timesheets />} />
-            <Route path="payroll" element={<Payroll />} />
-            <Route path="allowances" element={<Allowances />} />
-            <Route path="deductions" element={<Deductions />} />
-            <Route path="users" element={<Users />} />
+            <Route 
+              path="payroll" 
+              element={
+                <ProtectedRoute allowedRoles={['System Administrator', 'HR Manager']}>
+                  <Payroll />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="allowances" 
+              element={
+                <ProtectedRoute allowedRoles={['System Administrator', 'HR Manager']}>
+                  <Allowances />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="deductions" 
+              element={
+                <ProtectedRoute allowedRoles={['System Administrator', 'HR Manager']}>
+                  <Deductions />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="users" 
+              element={
+                <ProtectedRoute allowedRoles={['System Administrator']}>
+                  <Users />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />
           </Route>

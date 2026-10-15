@@ -74,6 +74,25 @@ export const api = {
     return await res.json();
   },
 
+  async updateUserStatus(id, active) {
+    const res = await fetch(`${API_BASE_URL}/auth/users/${id}/status`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ active }),
+    });
+    return await res.json();
+  },
+
+  async updateUserRole(id, role) {
+    const res = await fetch(`${API_BASE_URL}/auth/users/${id}/role`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ role }),
+    });
+    return await res.json();
+  },
+
+
   // Dashboard Stats
   async getDashboardStats() {
     const res = await fetch(`${API_BASE_URL}/masters/dashboard-stats`, {
