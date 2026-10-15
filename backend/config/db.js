@@ -36,7 +36,17 @@ const testConnection = async () => {
     if (err.code === 'ER_ACCESS_DENIED_ERROR') {
       console.error('   👉 Tip: Please update DB_PASSWORD in backend/.env to match your MySQL root password.');
     } else if (err.code === 'ER_BAD_DB_ERROR') {
-      console.error('   👉 Tip: Database does not exist yet. Run "npm run init-db" to create tables.');
+      console.log('🔄 Database not found. Automatically initializing schema and tables on Cloud MySQL...');
+      try {
+        const { runInit } = require('../scripts/initDb');
+        const initialized = await runInit();
+        if (initialized) {
+          console.log('✅ Auto-initialization complete! Database GC_ERP is ready.');
+          return true;
+        }
+      } catch (initErr) {
+        console.error('❌ Auto-initialization failed:', initErr.message);
+      }
     }
     return false;
   }

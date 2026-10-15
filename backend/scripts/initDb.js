@@ -42,6 +42,21 @@ const runInit = async () => {
         continue;
       }
 
+      if (scriptName === 'Seed_Data.sql') {
+        try {
+          const [userCheck] = await connection.query("SHOW TABLES LIKE 'Sec_Users'");
+          if (userCheck.length > 0) {
+            const [userRows] = await connection.query("SELECT COUNT(*) as count FROM Sec_Users");
+            if (userRows[0].count > 0) {
+              console.log(`ℹ️ Tables already contain data (${userRows[0].count} users). Skipping Seed_Data.sql.`);
+              continue;
+            }
+          }
+        } catch (e) {
+          // Table doesn't exist yet, proceed with seed
+        }
+      }
+
       console.log(`\n📄 Executing ${scriptName}...`);
       const sql = fs.readFileSync(filePath, 'utf-8');
       
@@ -59,11 +74,13 @@ const runInit = async () => {
     });
 
     console.log('\n🎉 Database initialization finished successfully!');
+    return true;
   } catch (err) {
     console.error('\n❌ Initialization Error:', err.message);
     if (err.code === 'ER_ACCESS_DENIED_ERROR') {
       console.error('👉 Please verify your DB_PASSWORD in backend/.env');
     }
+    return false;
   } finally {
     if (connection) {
       await connection.end();
@@ -71,4 +88,9 @@ const runInit = async () => {
   }
 };
 
-runInit();
+if (require.main === module) {
+  runInit();
+}
+
+module.exports = { runInit };
+
