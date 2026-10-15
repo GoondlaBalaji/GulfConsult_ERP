@@ -11,5 +11,6 @@ router.get('/leave-types', masterController.getLeaveTypes);
 router.get('/job-openings', masterController.getJobOpenings);
 router.get('/new-joiners', masterController.getNewJoiners);
 router.get('/dashboard-stats', masterController.getDashboardStats);
+router.post('/seed-40', masterController.seed40Employees);
 
 module.exports = router;

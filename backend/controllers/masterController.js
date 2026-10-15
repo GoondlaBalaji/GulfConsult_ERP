@@ -103,3 +103,24 @@ exports.getDashboardStats = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+exports.seed40Employees = async (req, res) => {
+  try {
+    const { runSeed40 } = require('../scripts/seed40');
+    const ok = await runSeed40();
+    if (!ok) {
+      return res.status(500).json({ success: false, message: 'Failed to run 40-employee seed.' });
+    }
+    const [[{ totalEmps }]] = await pool.query('SELECT COUNT(*) AS totalEmps FROM Gen_Employee;');
+    const [[{ totalUsers }]] = await pool.query('SELECT COUNT(*) AS totalUsers FROM Sec_Users;');
+    return res.json({
+      success: true,
+      message: '40-employee dataset successfully loaded into database!',
+      totalEmployees: totalEmps,
+      totalUsers: totalUsers,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
