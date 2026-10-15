@@ -1,0 +1,385 @@
+/* ==========================================================================
+   Exact acmenlei/login-form Stylesheet with Bebas Neue Font
+   Source: https://github.com/acmenlei/login-form/blob/master/assets/style.css
+   Font: Bebas Neue (Google Fonts)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+.acme-body-wrapper {
+    font-family: 'Bebas Neue', Arial, sans-serif;
+    background: #f8f8f8;
+    background-attachment: fixed;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.acme-body-wrapper * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Bebas Neue', Arial, sans-serif;
+}
+
+.acme-body-wrapper h1 {
+    margin: 0.2rem 0;
+    font-size: 2.2rem;
+    font-weight: 400;
+    letter-spacing: 1.5px;
+    color: #111;
+    text-transform: uppercase;
+}
+
+.acme-body-wrapper p {
+    font-size: 1.15rem;
+    line-height: 1.6rem;
+    font-weight: 400;
+    margin: 1.2rem 0;
+    letter-spacing: 1.2px;
+}
+
+.acme-body-wrapper span {
+    font-size: 0.95rem;
+    margin: 0.8rem 0;
+    color: #666;
+    letter-spacing: 0.8px;
+}
+
+.acme-body-wrapper a {
+    color: #333;
+    font-size: 1rem;
+    text-decoration: none;
+    margin: 0.8rem 0;
+    cursor: pointer;
+    letter-spacing: 1px;
+}
+
+.acme-body-wrapper a:hover {
+    text-decoration: underline;
+    color: #417dff;
+}
+
+/* Central Container */
+.acme-body-wrapper .container {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, .25), 0 10px 10px rgba(0, 0, 0, .22);
+    padding: 0.6rem;
+    width: 50rem;
+    height: 35rem;
+    overflow: hidden;
+    max-width: 95vw;
+    min-height: 35rem;
+}
+
+.acme-body-wrapper .form-container form {
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 0 2.2rem;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 4 Social Round Icons */
+.acme-body-wrapper .social-container {
+    margin: 0.6rem 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acme-body-wrapper .social-container a.social {
+    border: 1px solid #eee;
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 4px;
+    height: 2.1rem;
+    width: 2.1rem;
+    color: #333;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.acme-body-wrapper .social-container a.social:hover {
+    opacity: .8;
+    background: #f0f0f0;
+}
+
+/* Bottom-Border-Only Line Inputs (Supports both Lowercase and Uppercase) */
+.acme-body-wrapper .form-container input,
+.acme-body-wrapper input {
+    width: 100%;
+    height: 2.6rem;
+    text-indent: 1rem;
+    border: 1px solid #ccc;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    outline: none;
+    margin: 0.5rem 0;
+    font-size: 0.95rem;
+    letter-spacing: 0.3px;
+    background: transparent;
+    color: #222;
+    transition: border-color 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    text-transform: none !important;
+}
+
+.acme-body-wrapper .form-container input::placeholder,
+.acme-body-wrapper input::placeholder {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    text-transform: none !important;
+    font-size: 0.85rem;
+    letter-spacing: 0.2px;
+    color: #888;
+}
+
+.acme-body-wrapper .form-container input:focus,
+.acme-body-wrapper input:focus {
+    border-bottom-color: #417dff;
+}
+
+/* Solid Blue Primary Buttons */
+.acme-body-wrapper .form-container button {
+    padding: 0.5rem 1rem;
+    background: #417dff;
+    color: white;
+    border: 1px solid #fff;
+    outline: none;
+    cursor: pointer;
+    width: 6.5rem;
+    border-radius: 8px;
+    transition: all 100ms ease-in;
+    margin: 0.6rem 0;
+    font-size: 1.1rem;
+    letter-spacing: 1.5px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Bebas Neue', Arial, sans-serif;
+}
+
+.acme-body-wrapper .form-container button:hover {
+    background: #2f6bee;
+}
+
+.acme-body-wrapper .form-container button:active {
+    transform: scale(0.95, 0.95);
+}
+
+.acme-body-wrapper button#send_code {
+    width: 100%;
+    border-radius: 8px;
+    height: 2.4rem;
+    margin: 0.5rem 0;
+    background: #417dff;
+    color: white;
+    font-size: 1.05rem;
+    letter-spacing: 1.5px;
+    font-family: 'Bebas Neue', Arial, sans-serif;
+}
+
+.acme-body-wrapper button#send_code:hover {
+    background: #2f6bee;
+}
+
+/* Ghost Buttons on Blue Overlay */
+.acme-body-wrapper button.ghost {
+    background: transparent;
+    border-color: #fff;
+    border: 1px solid #fff;
+    outline: none;
+    cursor: pointer;
+    width: 6.5rem;
+    border-radius: 8px;
+    transition: all 100ms ease-in;
+    margin: 0.6rem 0;
+    padding: 0.5rem 0;
+    color: white;
+    font-size: 1.1rem;
+    letter-spacing: 1.5px;
+    font-family: 'Bebas Neue', Arial, sans-serif;
+}
+
+.acme-body-wrapper button.ghost:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.acme-body-wrapper button.ghost:active {
+    transform: scale(0.95, 0.95);
+}
+
+/* 2D Sliding Panels */
+.acme-body-wrapper .form-container {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    transition: all 0.5s ease-in;
+}
+
+.acme-body-wrapper .sign-in-container {
+    left: 0;
+    width: 50%;
+    z-index: 2;
+}
+
+.acme-body-wrapper .sign-up-container {
+    left: 0;
+    width: 50%;
+    opacity: 0;
+    z-index: 1;
+}
+
+/* Overlay Section */
+.acme-body-wrapper .overlay-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
+    transition: all 0.6s ease-in-out;
+    z-index: 99;
+}
+
+.acme-body-wrapper .overlay {
+    background: #417dff;
+    width: 200%;
+    height: 100%;
+    position: relative;
+    left: -100%;
+    transition: all 0.6s ease-in-out;
+    color: white;
+}
+
+.acme-body-wrapper .overlay-panel {
+    position: absolute;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
+    height: 100%;
+    padding: 0 2.2rem;
+    text-align: center;
+}
+
+.acme-body-wrapper .overlay-panel h1 {
+    color: #fff;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+}
+
+.acme-body-wrapper .overlay-panel p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.15rem;
+    letter-spacing: 1.2px;
+}
+
+.acme-body-wrapper .overlay-right {
+    right: 0;
+}
+
+.acme-body-wrapper .overlay-left {
+    left: 0;
+}
+
+/* Active 2D Sliding Translation Transitions */
+.acme-body-wrapper .container.right-panel-active .overlay-container {
+    transform: translateX(-100%);
+}
+
+.acme-body-wrapper .container.right-panel-active .sign-in-container {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.acme-body-wrapper .container.right-panel-active .sign-up-container {
+    transform: translateX(100%);
+    opacity: 1;
+    z-index: 5;
+    pointer-events: auto;
+    transition: all 0.6s ease-in-out;
+}
+
+.acme-body-wrapper .container.right-panel-active .overlay {
+    transform: translateX(50%);
+}
+
+.acme-body-wrapper .container.right-panel-active .overlay-left {
+    transform: translateX(0);
+    transition: all 0.6s ease-in-out;
+}
+
+.acme-body-wrapper .container.right-panel-active .overlay-right {
+    transform: translateX(20%);
+    transition: all 0.6s ease-in-out;
+}
+
+/* Quick Demo Roles Helper */
+.acme-demo-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.acme-demo-chip {
+    background: #f0f4ff;
+    border: 1px solid #d4e2ff;
+    color: #417dff;
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'Bebas Neue', monospace;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+}
+
+.acme-demo-chip:hover {
+    background: #417dff;
+    color: #fff;
+}
+
+/* Responsive adjustment for small screens */
+@media (max-width: 768px) {
+    .acme-body-wrapper .container {
+        width: 100%;
+        height: auto;
+        min-height: auto;
+    }
+    .acme-body-wrapper .overlay-container {
+        display: none;
+    }
+    .acme-body-wrapper .form-container {
+        position: static;
+        width: 100%;
+        transform: none !important;
+        opacity: 1 !important;
+    }
+    .acme-body-wrapper .sign-in-container,
+    .acme-body-wrapper .sign-up-container {
+        display: none;
+    }
+    .acme-body-wrapper .container:not(.right-panel-active) .sign-in-container {
+        display: block;
+    }
+    .acme-body-wrapper .container.right-panel-active .sign-up-container {
+        display: block;
+    }
+}

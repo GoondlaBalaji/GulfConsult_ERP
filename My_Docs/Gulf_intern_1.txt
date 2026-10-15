@@ -1,0 +1,587 @@
+HRMS:
+
+/*
+===============================================================================
+Project Name : Gulf Consult ERP (GC_ERP)
+Module       : HRMS (Human Resource Management System)
+Database     : GC_ERP
+Author       : Goondla Balaji
+Version      : 1.0
+Description  : This script creates all HRMS master and transaction tables.
+===============================================================================
+*/
+
+USE GC_ERP;
+
+-- =============================================================================
+-- 1. COMPANY MASTER
+-- =============================================================================
+CREATE TABLE Gen_Company
+(
+    ccode_int      INT AUTO_INCREMENT,
+    cname_vc       VARCHAR(150) NOT NULL,
+    address_vc     VARCHAR(250) NOT NULL,
+
+    crby_vc        VARCHAR(50) NOT NULL,
+    crdate_dt      DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc       VARCHAR(50),
+    moddate_dt     DATETIME DEFAULT CURRENT_TIMESTAMP
+                   ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (ccode_int)
+);
+
+-- =============================================================================
+-- 2. JOB TITLE MASTER
+-- =============================================================================
+
+CREATE TABLE Gen_JobTitles
+(
+    jcode_int      INT AUTO_INCREMENT,
+
+    jtitle_vc      VARCHAR(150) NOT NULL,
+
+    deleted_int    INT DEFAULT 0,
+
+    crby_vc        VARCHAR(50) NOT NULL,
+    crdate_dt      DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc       VARCHAR(50),
+    moddate_dt     DATETIME DEFAULT CURRENT_TIMESTAMP
+                   ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (jcode_int)
+);
+
+-- =============================================================================
+-- 3. NATIONALITY MASTER
+-- =============================================================================
+
+CREATE TABLE gen_nationality
+(
+    ncode_int      INT AUTO_INCREMENT,
+
+    nname_vc       VARCHAR(50) NOT NULL,
+
+    deleted_int    INT DEFAULT 0,
+
+    crby_vc        VARCHAR(50) NOT NULL,
+    crdate_dt      DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc       VARCHAR(50),
+    moddate_dt     DATETIME DEFAULT CURRENT_TIMESTAMP
+                   ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (ncode_int),
+
+    UNIQUE (nname_vc)
+);
+
+
+-- =============================================================================
+-- 4. EDUCATION MASTER
+-- =============================================================================
+
+CREATE TABLE Gen_Education
+(
+    ecode_int      INT AUTO_INCREMENT,
+
+    education_vc   VARCHAR(100) NOT NULL,
+
+    deleted_int    INT DEFAULT 0,
+
+    crby_vc        VARCHAR(50) NOT NULL,
+    crdate_dt      DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc       VARCHAR(50),
+    moddate_dt     DATETIME DEFAULT CURRENT_TIMESTAMP
+                   ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (ecode_int),
+
+    UNIQUE (education_vc)
+);
+
+
+-- =============================================================================
+-- 5. DOCUMENT TYPE MASTER
+-- =============================================================================
+
+CREATE TABLE Gen_DocTypes
+(
+    doctypecode_int    INT AUTO_INCREMENT,
+
+    doctypename_vc     VARCHAR(100) NOT NULL,
+
+    deleted_int        INT DEFAULT 0,
+
+    crby_vc            VARCHAR(50) NOT NULL,
+    crdate_dt          DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc           VARCHAR(50),
+    moddate_dt         DATETIME DEFAULT CURRENT_TIMESTAMP
+                       ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (doctypecode_int),
+
+    UNIQUE (doctypename_vc)
+);
+
+
+-- =============================================================================
+-- 6. LEAVE TYPE MASTER
+-- =============================================================================
+
+CREATE TABLE Gen_LeaveTypes
+(
+    leavecode_int     INT AUTO_INCREMENT,
+
+    leavename_vc      VARCHAR(100) NOT NULL,
+
+    noofdays_int      INT NOT NULL,
+
+    deleted_int       INT DEFAULT 0,
+
+    crby_vc           VARCHAR(50) NOT NULL,
+    crdate_dt         DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc          VARCHAR(50),
+    moddate_dt        DATETIME DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (leavecode_int),
+
+    UNIQUE (leavename_vc)
+);
+
+
+-- =============================================================================
+-- JOB OPENING LIST
+-- =============================================================================
+
+CREATE TABLE Jobopening_List
+(
+    jobopen_id        INT AUTO_INCREMENT,
+
+    ccode_int         INT NOT NULL,
+    jcode_int         INT NOT NULL,
+
+    noofvacancy_int   INT NOT NULL,
+    experience_int    INT,
+
+    salary_from_dc    DECIMAL(10,2),
+    salary_to_dc      DECIMAL(10,2),
+
+    location_vc       VARCHAR(100),
+
+    status_vc         VARCHAR(30),
+
+    crby_vc           VARCHAR(50) NOT NULL,
+    crdate_dt         DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc          VARCHAR(50),
+    moddate_dt        DATETIME DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (jobopen_id),
+
+    FOREIGN KEY (ccode_int)
+        REFERENCES Gen_Company(ccode_int),
+
+    FOREIGN KEY (jcode_int)
+        REFERENCES Gen_JobTitles(jcode_int)
+);
+
+
+-- =============================================================================
+-- NEW JOINER LIST
+-- =============================================================================
+
+CREATE TABLE New_Joiner_List
+(
+    joiner_id          INT AUTO_INCREMENT,
+
+    employee_name_vc   VARCHAR(100) NOT NULL,
+
+    email_vc           VARCHAR(100),
+
+    mobile_vc          VARCHAR(20),
+
+    jcode_int          INT,
+
+    joiningdate_dt     DATE,
+
+    status_vc          VARCHAR(30),
+
+    crby_vc            VARCHAR(50) NOT NULL,
+    crdate_dt          DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc           VARCHAR(50),
+    moddate_dt         DATETIME DEFAULT CURRENT_TIMESTAMP
+                       ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (joiner_id),
+
+    FOREIGN KEY (jcode_int)
+        REFERENCES Gen_JobTitles(jcode_int)
+);
+
+
+-- =============================================================================
+-- EMPLOYEE MASTER
+-- =============================================================================
+
+CREATE TABLE Gen_Employee
+(
+    ecode_nu          BIGINT AUTO_INCREMENT,
+
+    ccode_int         INT NOT NULL,
+
+    empname_vc        VARCHAR(100) NOT NULL,
+
+    gender_vc         VARCHAR(10),
+
+    dob_dt            DATE,
+
+    mobile_vc         VARCHAR(20),
+
+    email_vc          VARCHAR(100),
+
+    address_vc        VARCHAR(255),
+
+    jcode_int         INT,
+
+    ncode_int         INT,
+
+    ecode_int         INT,
+
+    doj_dt            DATE,
+
+    status_vc         VARCHAR(20),
+
+    crby_vc           VARCHAR(50) NOT NULL,
+    crdate_dt         DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc          VARCHAR(50),
+    moddate_dt        DATETIME DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (ecode_nu),
+
+    FOREIGN KEY (ccode_int)
+        REFERENCES Gen_Company(ccode_int),
+
+    FOREIGN KEY (jcode_int)
+        REFERENCES Gen_JobTitles(jcode_int),
+
+    FOREIGN KEY (ncode_int)
+        REFERENCES gen_nationality(ncode_int),
+
+    FOREIGN KEY (ecode_int)
+        REFERENCES Gen_Education(ecode_int)
+);
+
+
+-- =============================================================================
+-- USERS
+-- =============================================================================
+
+CREATE TABLE Sec_Users
+(
+    user_id           INT AUTO_INCREMENT,
+
+    ecode_nu          BIGINT NOT NULL,
+
+    username_vc       VARCHAR(50) NOT NULL,
+
+    password_vc       VARCHAR(255) NOT NULL,
+
+    role_vc           VARCHAR(30),
+
+    active_int        INT DEFAULT 1,
+
+    crby_vc           VARCHAR(50) NOT NULL,
+    crdate_dt         DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc          VARCHAR(50),
+    moddate_dt        DATETIME DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (user_id),
+
+    UNIQUE (username_vc),
+
+    FOREIGN KEY (ecode_nu)
+        REFERENCES Gen_Employee(ecode_nu)
+);
+
+
+-- =============================================================================
+-- EMPLOYEE DOCUMENTS
+-- =============================================================================
+
+CREATE TABLE Doc_File_Path
+(
+    sfpath_id          INT AUTO_INCREMENT,
+
+    ecode_nu           BIGINT NOT NULL,
+
+    doctypecode_int    INT NOT NULL,
+
+    filepath_vc        VARCHAR(255) NOT NULL,
+
+    upload_dt          DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (sfpath_id),
+
+    FOREIGN KEY (ecode_nu)
+        REFERENCES Gen_Employee(ecode_nu),
+
+    FOREIGN KEY (doctypecode_int)
+        REFERENCES Gen_DocTypes(doctypecode_int)
+);
+
+
+
+
+
+
+
+
+
+
+TSMS:
+
+-- =============================================================================
+-- TSMS (TIME SHEET MANAGEMENT SYSTEM)
+-- =============================================================================
+
+-- =============================================================================
+-- 1. PROJECT MASTER
+-- =============================================================================
+
+CREATE TABLE Gen_Projects
+(
+    projectcode_int      INT AUTO_INCREMENT,
+
+    projectname_vc       VARCHAR(150) NOT NULL,
+
+    clientname_vc        VARCHAR(150),
+
+    startdate_dt         DATE,
+
+    enddate_dt           DATE,
+
+    status_vc            VARCHAR(30),
+
+    deleted_int          INT DEFAULT 0,
+
+    crby_vc              VARCHAR(50) NOT NULL,
+    crdate_dt            DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc             VARCHAR(50),
+    moddate_dt           DATETIME DEFAULT CURRENT_TIMESTAMP
+                         ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (projectcode_int)
+);
+
+-- =============================================================================
+-- 2. EMPLOYEE TIME TRACK DETAILS
+-- =============================================================================
+
+CREATE TABLE Emp_TimeTrack_Details
+(
+    timetrack_id         INT AUTO_INCREMENT,
+
+    ecode_nu             BIGINT NOT NULL,
+
+    projectcode_int      INT NOT NULL,
+
+    workdate_dt          DATE NOT NULL,
+
+    hoursworked_dc       DECIMAL(5,2) NOT NULL,
+
+    taskdescription_vc   VARCHAR(255),
+
+    status_vc            VARCHAR(30),
+
+    crby_vc              VARCHAR(50) NOT NULL,
+    crdate_dt            DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc             VARCHAR(50),
+    moddate_dt           DATETIME DEFAULT CURRENT_TIMESTAMP
+                         ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (timetrack_id),
+
+    FOREIGN KEY (ecode_nu)
+        REFERENCES Gen_Employee(ecode_nu),
+
+    FOREIGN KEY (projectcode_int)
+        REFERENCES Gen_Projects(projectcode_int)
+);
+
+-- =============================================================================
+-- 3. EMPLOYEE TIME SHEET DETAILS
+-- =============================================================================
+
+CREATE TABLE Emp_Time_Sheet_Details
+(
+    timesheet_id         INT AUTO_INCREMENT,
+
+    ecode_nu             BIGINT NOT NULL,
+
+    month_int            INT NOT NULL,
+
+    year_int             INT NOT NULL,
+
+    totalhours_dc        DECIMAL(6,2),
+
+    approvalstatus_vc    VARCHAR(30),
+
+    approvedby_vc        VARCHAR(50),
+
+    approveddate_dt      DATETIME,
+
+    crby_vc              VARCHAR(50) NOT NULL,
+    crdate_dt            DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc             VARCHAR(50),
+    moddate_dt           DATETIME DEFAULT CURRENT_TIMESTAMP
+                         ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (timesheet_id),
+
+    FOREIGN KEY (ecode_nu)
+        REFERENCES Gen_Employee(ecode_nu)
+);
+
+
+
+
+Payroll:
+
+-- =============================================================================
+-- PAYROLL MODULE
+-- =============================================================================
+
+-- =============================================================================
+-- 1. ALLOWANCE MASTER
+-- =============================================================================
+
+CREATE TABLE Gen_Allowance_List
+(
+    allowancecode_int      INT AUTO_INCREMENT,
+
+    allowancename_vc       VARCHAR(100) NOT NULL,
+
+    allowanceamount_dc     DECIMAL(10,2) NOT NULL,
+
+    deleted_int            INT DEFAULT 0,
+
+    crby_vc                VARCHAR(50) NOT NULL,
+    crdate_dt              DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc               VARCHAR(50),
+    moddate_dt             DATETIME DEFAULT CURRENT_TIMESTAMP
+                           ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (allowancecode_int),
+
+    UNIQUE (allowancename_vc)
+);
+
+-- =============================================================================
+-- 2. DEDUCTION MASTER
+-- =============================================================================
+
+CREATE TABLE Gen_Deductions_List
+(
+    deductioncode_int      INT AUTO_INCREMENT,
+
+    deductionname_vc       VARCHAR(100) NOT NULL,
+
+    deductionamount_dc     DECIMAL(10,2) NOT NULL,
+
+    deleted_int            INT DEFAULT 0,
+
+    crby_vc                VARCHAR(50) NOT NULL,
+    crdate_dt              DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc               VARCHAR(50),
+    moddate_dt             DATETIME DEFAULT CURRENT_TIMESTAMP
+                           ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (deductioncode_int),
+
+    UNIQUE (deductionname_vc)
+);
+
+-- =============================================================================
+-- 3. EMPLOYEE SALARY MASTER
+-- =============================================================================
+
+CREATE TABLE emp_salary_master
+(
+    salarymaster_id        INT AUTO_INCREMENT,
+
+    ecode_nu               BIGINT NOT NULL,
+
+    basicsalary_dc         DECIMAL(12,2) NOT NULL,
+
+    grosssalary_dc         DECIMAL(12,2),
+
+    netsalary_dc           DECIMAL(12,2),
+
+    salarymonth_int        INT NOT NULL,
+
+    salaryyear_int         INT NOT NULL,
+
+    status_vc              VARCHAR(30),
+
+    crby_vc                VARCHAR(50) NOT NULL,
+    crdate_dt              DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    modby_vc               VARCHAR(50),
+    moddate_dt             DATETIME DEFAULT CURRENT_TIMESTAMP
+                           ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (salarymaster_id),
+
+    FOREIGN KEY (ecode_nu)
+        REFERENCES Gen_Employee(ecode_nu)
+);
+
+-- =============================================================================
+-- 4. EMPLOYEE SALARY DETAILS
+-- =============================================================================
+
+CREATE TABLE emp_salary_details
+(
+    salarydetail_id        INT AUTO_INCREMENT,
+
+    salarymaster_id        INT NOT NULL,
+
+    allowancecode_int      INT,
+
+    deductioncode_int      INT,
+
+    allowanceamount_dc     DECIMAL(10,2) DEFAULT 0,
+
+    deductionamount_dc     DECIMAL(10,2) DEFAULT 0,
+
+    remarks_vc             VARCHAR(255),
+
+    PRIMARY KEY (salarydetail_id),
+
+    FOREIGN KEY (salarymaster_id)
+        REFERENCES emp_salary_master(salarymaster_id),
+
+    FOREIGN KEY (allowancecode_int)
+        REFERENCES Gen_Allowance_List(allowancecode_int),
+
+    FOREIGN KEY (deductioncode_int)
+        REFERENCES Gen_Deductions_List(deductioncode_int)
+);
