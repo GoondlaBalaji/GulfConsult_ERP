@@ -26,6 +26,23 @@ exports.login = async (req, res) => {
     );
 
     if (rows.length === 0) {
+      if (cleanUser.includes('@')) {
+        const [empCheck] = await pool.query(
+          'SELECT ecode_nu FROM Gen_Employee WHERE LOWER(email_vc) = ?',
+          [cleanUser.toLowerCase()]
+        );
+        if (empCheck.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'This email ID does not present in our database. Please contact HR.',
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: 'Your employee record is in our database, but your login password is not set yet. Please click "Sign Up" to activate your account with OTP.',
+          });
+        }
+      }
       return res.status(401).json({ success: false, message: 'Invalid username or password.' });
     }
 
@@ -108,30 +125,43 @@ exports.sendRegisterOtp = async (req, res) => {
   const cleanEmail = email.trim().toLowerCase();
 
   try {
-    // Check if an account already exists with this email in Sec_Users
-    const [existingUser] = await pool.query(
-      `SELECT u.user_id FROM Sec_Users u
-       JOIN Gen_Employee e ON u.ecode_nu = e.ecode_nu
-       WHERE LOWER(e.email_vc) = ?`,
+    // 1. Mandatory Enterprise Rule: Email MUST already exist in the HR Gen_Employee database
+    const [empRows] = await pool.query(
+      `SELECT ecode_nu, empname_vc FROM Gen_Employee WHERE LOWER(email_vc) = ?`,
       [cleanEmail]
+    );
+
+    if (empRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'This email ID does not present in our database. Only registered Gulf Consult employees can create an account. Please contact HR.',
+      });
+    }
+
+    const employee = empRows[0];
+
+    // 2. Check if this employee already has an account in Sec_Users
+    const [existingUser] = await pool.query(
+      `SELECT u.user_id, u.username_vc FROM Sec_Users u WHERE u.ecode_nu = ?`,
+      [employee.ecode_nu]
     );
 
     if (existingUser.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'An account is already registered with this email. Please log in directly.',
+        message: `An account (${existingUser[0].username_vc}) is already registered for this employee. Please log in directly with your password.`,
       });
     }
 
-    // Generate 6-digit OTP code
+    // 3. Generate 6-digit OTP code
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     otpStore.set(cleanEmail, {
       otp,
       expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes expiry
     });
 
-    // Send real email via nodemailer
-    const emailResult = await sendOtpEmail(cleanEmail, otp, 'registration');
+    // 4. Send real email via Resend
+    await sendOtpEmail(cleanEmail, otp, 'registration');
 
     return res.json({
       success: true,
@@ -171,7 +201,35 @@ exports.register = async (req, res) => {
   }
 
   try {
-    // Check if username already taken in Sec_Users
+    // 1. Ensure employee exists in Gen_Employee
+    const [existingEmp] = await pool.query(
+      `SELECT ecode_nu FROM Gen_Employee WHERE LOWER(email_vc) = ?`,
+      [cleanEmail]
+    );
+
+    if (existingEmp.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'This email ID does not present in our database. Please contact HR.',
+      });
+    }
+
+    const ecodeNu = existingEmp[0].ecode_nu;
+
+    // 2. Ensure no duplicate user account for this employee
+    const [existingAccount] = await pool.query(
+      `SELECT user_id FROM Sec_Users WHERE ecode_nu = ?`,
+      [ecodeNu]
+    );
+
+    if (existingAccount.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account is already activated for this employee. Please log in directly with your password.',
+      });
+    }
+
+    // 3. Check if username is already taken in Sec_Users
     const [existingUsername] = await pool.query(
       `SELECT user_id FROM Sec_Users WHERE LOWER(username_vc) = LOWER(?)`,
       [cleanUsername]
@@ -181,32 +239,13 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, message: `Username "${cleanUsername}" is already taken.` });
     }
 
-    // Check if employee already exists in Gen_Employee by email
-    const [existingEmp] = await pool.query(
-      `SELECT ecode_nu FROM Gen_Employee WHERE LOWER(email_vc) = ?`,
-      [cleanEmail]
-    );
-
-    let ecodeNu;
-    if (existingEmp.length > 0) {
-      ecodeNu = existingEmp[0].ecode_nu;
-    } else {
-      // Auto-create Gen_Employee record for self-registering employee
-      const [newEmp] = await pool.query(
-        `INSERT INTO Gen_Employee (ccode_int, empname_vc, email_vc, jcode_int, ncode_int, ecode_int, doj_dt, status_vc, crby_vc)
-         VALUES (1, ?, ?, 1, 1, 1, CURDATE(), 'Active', 'Self Registration')`,
-        [cleanUsername, cleanEmail]
-      );
-      ecodeNu = newEmp.insertId;
-    }
-
-    // Hash password securely with bcrypt
+    // 4. Hash password securely with bcrypt
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user into Sec_Users
+    // 5. Insert login credentials into Sec_Users (linked to ecodeNu)
     const [newUser] = await pool.query(
       `INSERT INTO Sec_Users (ecode_nu, username_vc, password_vc, role_vc, active_int, crby_vc)
-       VALUES (?, ?, ?, 'Employee', 1, 'Self Registration')`,
+       VALUES (?, ?, ?, 'Employee', 1, 'Employee Self-Activation')`,
       [ecodeNu, cleanUsername, hashedPassword]
     );
 
@@ -215,7 +254,7 @@ exports.register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Account registered successfully! You may now log in.',
+      message: 'Account registered successfully! You may now log in with your credentials.',
       userId: newUser.insertId,
     });
   } catch (err) {

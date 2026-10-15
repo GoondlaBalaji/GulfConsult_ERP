@@ -154,7 +154,9 @@ export default function Login() {
               </a>
             </div>
 
-            <span>You can choose from the above methods to register your account!</span>
+            <span style={{ fontSize: '11px', color: '#475569', textAlign: 'center', lineHeight: '1.4' }}>
+              Registered employees only: enter your official corporate email to receive your OTP and set your password.
+            </span>
 
             {error && isRightPanelActive && (
               <span style={{ color: '#e11d48', fontSize: '11px', margin: '2px 0' }}>{error}</span>
@@ -246,23 +248,30 @@ export default function Login() {
               <span
                 onClick={() => setDemoUser('admin', 'admin123')}
                 className="acme-demo-chip"
-                title="Click to fill admin credentials"
+                title="System Administrator (Full Access)"
               >
                 admin
               </span>
               <span
                 onClick={() => setDemoUser('hr_manager', 'hr123')}
                 className="acme-demo-chip"
-                title="Click to fill hr credentials"
+                title="HR Manager (HRMS & Payroll)"
               >
                 hr_manager
               </span>
               <span
                 onClick={() => setDemoUser('pm_expert', 'pm123')}
                 className="acme-demo-chip"
-                title="Click to fill pm credentials"
+                title="Project Manager (TSMS & Projects)"
               >
                 pm_expert
+              </span>
+              <span
+                onClick={() => setDemoUser('sarah_j', 'gc123456')}
+                className="acme-demo-chip"
+                title="Standard Employee (Timesheet & Profile)"
+              >
+                employee
               </span>
             </div>
 
