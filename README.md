@@ -5,9 +5,11 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 [![CI/CD Pipeline](https://github.com/GoondlaBalaji/GulfConsult_ERP/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/GoondlaBalaji/GulfConsult_ERP/actions/workflows/ci-cd.yml)
-![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+[![Vercel Deployment](https://img.shields.io/badge/Live_Demo-gulfconsulterp--frontend.vercel.app-00C7B7?style=for-the-badge&logo=vercel&logoColor=white)](https://gulfconsulterp-frontend.vercel.app)
 
 A modern, high-performance web-based Enterprise Resource Planning (ERP) suite engineered for **Gulf Consult**. The system unifies Human Resource Management (HRMS), Time Sheet Management (TSMS), and Automated Payroll into a cohesive, secure, and intuitive digital workspace.
+
+🌐 **Live Production App:** [https://gulfconsulterp-frontend.vercel.app](https://gulfconsulterp-frontend.vercel.app)
 
 ---
 
