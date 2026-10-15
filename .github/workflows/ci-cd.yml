@@ -87,9 +87,7 @@ jobs:
           path: "ERP project/gc-erp/frontend/dist"
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
-        with:
-          enablement: true
+        uses: actions/configure-pages@v5
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
