@@ -136,8 +136,6 @@ exports.sendRegisterOtp = async (req, res) => {
     return res.json({
       success: true,
       message: `Verification code sent to ${cleanEmail}. Please check your inbox.`,
-      simulated: !!emailResult.simulated,
-      otpPreview: emailResult.simulated ? otp : undefined,
     });
   } catch (err) {
     console.error('Error sending registration OTP:', err);

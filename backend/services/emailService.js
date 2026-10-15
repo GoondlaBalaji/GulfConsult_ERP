@@ -1,3 +1,4 @@
+const { Resend } = require('resend');
 const nodemailer = require('nodemailer');
 
 const createTransporter = () => {
@@ -18,19 +19,12 @@ const createTransporter = () => {
 };
 
 /**
- * Send 6-Digit OTP Email
+ * Send Real 6-Digit OTP Email via Resend Third-Party API (or fallback to Nodemailer)
  * @param {string} toEmail - Recipient email address
  * @param {string} otp - 6-Digit OTP code
  * @param {string} purpose - 'registration' or 'login'
  */
 const sendOtpEmail = async (toEmail, otp, purpose = 'registration') => {
-  const transporter = createTransporter();
-
-  if (!transporter) {
-    console.warn(`⚠️ EMAIL_USER or EMAIL_PASS not configured in .env. OTP for ${toEmail} is: ${otp}`);
-    return { success: true, simulated: true, otp };
-  }
-
   const subject =
     purpose === 'registration'
       ? 'Gulf Consult ERP — Your Account Activation OTP Code'
@@ -84,16 +78,52 @@ const sendOtpEmail = async (toEmail, otp, purpose = 'registration') => {
     </html>
   `;
 
-  const mailOptions = {
-    from: `"Gulf Consult ERP" <${process.env.EMAIL_USER}>`,
-    to: toEmail,
-    subject,
-    html,
-  };
+  // 1. Try Resend Third-Party API first (Industry standard)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const fromEmail = process.env.RESEND_FROM || 'Gulf Consult ERP <onboarding@resend.dev>';
+      const result = await resend.emails.send({
+        from: fromEmail,
+        to: [toEmail],
+        subject,
+        html,
+      });
 
-  const info = await transporter.sendMail(mailOptions);
-  console.log(`✉️ Email OTP successfully delivered to ${toEmail} (Message ID: ${info.messageId})`);
-  return { success: true, messageId: info.messageId };
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      console.log(`🚀 [Resend API] Real email successfully delivered to ${toEmail} (ID: ${result.data?.id})`);
+      return { success: true, provider: 'resend', id: result.data?.id };
+    } catch (resendErr) {
+      console.error('❌ Resend API delivery error:', resendErr.message);
+      throw resendErr;
+    }
+  }
+
+  // 2. Try Nodemailer Gmail SMTP if configured
+  const transporter = createTransporter();
+  if (transporter) {
+    try {
+      const mailOptions = {
+        from: `"Gulf Consult ERP" <${process.env.EMAIL_USER}>`,
+        to: toEmail,
+        subject,
+        html,
+      };
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`✉️ [Nodemailer] Email successfully delivered to ${toEmail} (ID: ${info.messageId})`);
+      return { success: true, provider: 'nodemailer', messageId: info.messageId };
+    } catch (smtpErr) {
+      console.error('❌ Nodemailer delivery error:', smtpErr.message);
+      throw smtpErr;
+    }
+  }
+
+  // 3. Fallback when neither service has API keys configured
+  console.warn(`⚠️ No email provider configured (Set RESEND_API_KEY in .env). OTP for ${toEmail} is: ${otp}`);
+  return { success: true, simulated: true, otp };
 };
 
 module.exports = {

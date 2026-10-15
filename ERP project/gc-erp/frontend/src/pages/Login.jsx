@@ -70,10 +70,9 @@ export default function Login() {
     try {
       const res = await api.sendRegisterOtp(signUpData.email);
       setCodeSent(true);
-      setInfoMessage(res.message || 'Verification code sent to your email.');
-      if (res.simulated && res.otpPreview) {
-        setSignUpData((prev) => ({ ...prev, code: res.otpPreview }));
-      }
+      setInfoMessage('Verification code sent to your email! Please check your Inbox (or Spam/Junk folder).');
+      // Always keep the code blank so the user types the code received in their email
+      setSignUpData((prev) => ({ ...prev, code: '' }));
     } catch (err) {
       setError(err.message || 'Failed to dispatch verification email.');
     } finally {
