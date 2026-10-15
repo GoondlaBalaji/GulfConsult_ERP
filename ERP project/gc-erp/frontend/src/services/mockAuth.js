@@ -62,10 +62,53 @@ export const saveUsers = (users) => {
 };
 
 export const loginUser = async (username, password) => {
-  // Simulate network delay
-  await new Promise((res) => setTimeout(res, 300));
-
   const cleanUsername = (username || '').trim();
+
+  // 1. Authenticate with Live Render Backend & TiDB Cloud
+  try {
+    const API_URL =
+      import.meta.env.VITE_API_BASE_URL || 'https://gulfconsult-erp-backend.onrender.com/api';
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: cleanUsername, password }),
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (data.token) {
+        localStorage.setItem('gc_erp_token', data.token);
+      }
+      return {
+        success: true,
+        user: {
+          user_id: data.user.user_id,
+          ecode_nu: data.user.ecode_nu,
+          username_vc: data.user.username_vc,
+          empname_vc: data.user.empname_vc,
+          email_vc: data.user.email_vc,
+          role_vc: data.user.role_vc,
+          department: data.user.company_name || 'Gulf Consult',
+        },
+        otpRequired: false,
+        otpPreview: data.otpPreview || '123456',
+      };
+    } else if (res.status === 401 || res.status === 403) {
+      throw new Error(data.message || 'Invalid username or password. Please check your credentials.');
+    }
+  } catch (apiErr) {
+    if (
+      apiErr.message.includes('Invalid username') ||
+      apiErr.message.includes('suspended') ||
+      apiErr.message.includes('inactive')
+    ) {
+      throw apiErr;
+    }
+    console.warn('Live API request notice:', apiErr.message);
+  }
+
+  // 2. Local Fallback
+  await new Promise((res) => setTimeout(res, 300));
   const users = getStoredUsers();
   const user = users.find(
     (u) =>
