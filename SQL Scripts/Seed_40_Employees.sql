@@ -10,10 +10,18 @@ Description  : Seeds 40 structured employees (6 primary + 34 GCC engineering/HR
 */
 
 USE GC_ERP;
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- =============================================================================
--- 1. ENSURE EXTRA JOB TITLES EXIST
+-- 1. ENSURE PREREQUISITE MASTER DATA EXISTS
 -- =============================================================================
+-- Companies
+INSERT INTO Gen_Company (ccode_int, cname_vc, address_vc, crby_vc) VALUES
+(1, 'Gulf Consult Engineering & Planning', 'Al-Murqab, Block 3, Al-Sour Street, Kuwait City', 'System Admin'),
+(2, 'Gulf Maritime Contracting Ltd', 'Shuwaikh Industrial Area, Port Street, Kuwait', 'System Admin')
+ON DUPLICATE KEY UPDATE cname_vc = VALUES(cname_vc);
+
+-- Job Titles
 INSERT IGNORE INTO Gen_JobTitles (jcode_int, jtitle_vc, crby_vc) VALUES
 (1, 'Senior Full Stack Architect', 'System Admin'),
 (2, 'HR Manager', 'System Admin'),
@@ -30,6 +38,25 @@ INSERT IGNORE INTO Gen_JobTitles (jcode_int, jtitle_vc, crby_vc) VALUES
 (13, 'HSE Safety Officer', 'System Admin'),
 (14, 'Document Controller', 'System Admin'),
 (15, 'Chief Architect', 'System Admin');
+
+-- Nationalities
+INSERT IGNORE INTO gen_nationality (ncode_int, nname_vc, crby_vc) VALUES
+(1, 'Kuwaiti', 'System Admin'),
+(2, 'Indian', 'System Admin'),
+(3, 'Jordanian', 'System Admin'),
+(4, 'British', 'System Admin'),
+(5, 'Egyptian', 'System Admin'),
+(6, 'Lebanese', 'System Admin'),
+(7, 'Filipino', 'System Admin'),
+(8, 'American', 'System Admin');
+
+-- Education
+INSERT IGNORE INTO Gen_Education (ecode_int, education_vc, crby_vc) VALUES
+(1, 'High School Diploma', 'System Admin'),
+(2, 'Technical Diploma', 'System Admin'),
+(3, 'Bachelor of Science / Engineering', 'System Admin'),
+(4, 'Master of Business Administration (MBA)', 'System Admin'),
+(5, 'Doctor of Philosophy (Ph.D.)', 'System Admin');
 
 -- =============================================================================
 -- 2. INSERT 40 EMPLOYEES (6 Primary Real Roles + 34 Realistic Enterprise Staff)
@@ -135,4 +162,7 @@ ON DUPLICATE KEY UPDATE
     grosssalary_dc = VALUES(grosssalary_dc),
     netsalary_dc = VALUES(netsalary_dc);
 
+SET FOREIGN_KEY_CHECKS = 1;
+
 SELECT '40 Employee Dataset successfully installed in GC_ERP!' AS Status, COUNT(*) AS TotalEmployees FROM Gen_Employee;
+

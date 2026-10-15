@@ -1,7 +1,11 @@
 // Gulf Consult ERP - Production API Service connecting to Render Backend & TiDB Cloud
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'https://gulfconsult-erp-backend.onrender.com/api';
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5000/api'
+    : 'https://gulfconsult-erp-backend.onrender.com/api');
+
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('gc_erp_token');
