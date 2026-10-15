@@ -11,6 +11,9 @@ const runInit = async () => {
 
   let connection;
   try {
+    const isCloud = process.env.DB_HOST && process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1';
+    const sslConfig = (process.env.DB_SSL === 'true' || isCloud) ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined;
+
     // Connect without database first to ensure database creation
     connection = await mysql.createConnection({
       host: process.env.DB_HOST || 'localhost',
@@ -18,6 +21,7 @@ const runInit = async () => {
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
       multipleStatements: true,
+      ssl: sslConfig,
     });
 
     console.log('✅ MySQL Server connection established.');

@@ -3,6 +3,9 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const isCloud = process.env.DB_HOST && process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1';
+const sslConfig = (process.env.DB_SSL === 'true' || isCloud) ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined;
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '3306', 10),
@@ -15,6 +18,7 @@ const pool = mysql.createPool({
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
   multipleStatements: true,
+  ssl: sslConfig,
 });
 
 // Test Database Connection
