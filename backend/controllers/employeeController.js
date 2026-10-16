@@ -83,7 +83,22 @@ exports.createEmployee = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Employee name and email are required.' });
   }
 
+  const cleanEmail = email_vc.trim().toLowerCase();
+
   try {
+    // Prevent duplicate employees with the same email
+    const [existing] = await pool.query(
+      'SELECT ecode_nu, empname_vc FROM Gen_Employee WHERE LOWER(email_vc) = ?',
+      [cleanEmail]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `An employee (${existing[0].empname_vc}) is already registered with this email address (${cleanEmail}). Each employee must have a unique email address.`,
+      });
+    }
+
     const crby = req.user ? req.user.username_vc : 'System Admin';
     const [result] = await pool.query(
       `INSERT INTO Gen_Employee 
@@ -95,7 +110,7 @@ exports.createEmployee = async (req, res) => {
         gender_vc,
         dob_dt || '1995-01-01',
         mobile_vc,
-        email_vc,
+        cleanEmail,
         address_vc,
         jcode_int,
         ncode_int,
@@ -113,6 +128,12 @@ exports.createEmployee = async (req, res) => {
     });
   } catch (err) {
     console.error('Error creating employee:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({
+        success: false,
+        message: 'An employee with this email address already exists. Duplicate email is not allowed.',
+      });
+    }
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -122,6 +143,21 @@ exports.updateEmployee = async (req, res) => {
   const { empname_vc, mobile_vc, email_vc, address_vc, jcode_int, status_vc } = req.body;
 
   try {
+    // If updating email, ensure no other employee has the same email
+    if (email_vc) {
+      const cleanEmail = email_vc.trim().toLowerCase();
+      const [existing] = await pool.query(
+        'SELECT ecode_nu, empname_vc FROM Gen_Employee WHERE LOWER(email_vc) = ? AND ecode_nu != ?',
+        [cleanEmail, id]
+      );
+      if (existing.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Another employee (${existing[0].empname_vc}) is already using this email address (${cleanEmail}).`,
+        });
+      }
+    }
+
     const modby = req.user ? req.user.username_vc : 'System Admin';
     await pool.query(
       `UPDATE Gen_Employee 
@@ -133,11 +169,17 @@ exports.updateEmployee = async (req, res) => {
            status_vc = COALESCE(?, status_vc),
            modby_vc = ?
        WHERE ecode_nu = ?`,
-      [empname_vc, mobile_vc, email_vc, address_vc, jcode_int, status_vc, modby, id]
+      [empname_vc, mobile_vc, email_vc ? email_vc.trim().toLowerCase() : undefined, address_vc, jcode_int, status_vc, modby, id]
     );
 
     return res.json({ success: true, message: 'Employee updated successfully.' });
   } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({
+        success: false,
+        message: 'An employee with this email address already exists. Duplicate email is not allowed.',
+      });
+    }
     return res.status(500).json({ success: false, message: err.message });
   }
 };

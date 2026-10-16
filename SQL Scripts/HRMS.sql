@@ -209,6 +209,7 @@ CREATE TABLE IF NOT EXISTS Gen_Employee
                       ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (ecode_nu),
+    UNIQUE (email_vc),
     FOREIGN KEY (ccode_int) REFERENCES Gen_Company(ccode_int),
     FOREIGN KEY (jcode_int) REFERENCES Gen_JobTitles(jcode_int),
     FOREIGN KEY (ncode_int) REFERENCES gen_nationality(ncode_int),
@@ -236,6 +237,7 @@ CREATE TABLE IF NOT EXISTS Sec_Users
 
     PRIMARY KEY (user_id),
     UNIQUE (username_vc),
+    UNIQUE (ecode_nu),
     FOREIGN KEY (ecode_nu) REFERENCES Gen_Employee(ecode_nu)
 );
 
