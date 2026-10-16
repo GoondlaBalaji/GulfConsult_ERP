@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/db');
 const { sendOtpEmail } = require('../services/emailService');
-const { sendSupabaseOtp, verifySupabaseOtp } = require('../services/supabaseAuthService');
+const { sendSupabaseOtp, verifySupabaseOtp, verifySupabaseAccessToken } = require('../services/supabaseAuthService');
 
 // In-memory OTP storage for 2FA verification & Registration
 const otpStore = new Map();
@@ -272,6 +272,128 @@ exports.register = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Registration failed: ' + err.message });
   }
 };
+
+// Complete registration after user clicks "Confirm email address" link in email
+exports.completeLinkRegistration = async (req, res) => {
+  const { username, password, accessToken, email } = req.body;
+
+  if (!username || !password || (!accessToken && !email)) {
+    return res.status(400).json({ success: false, message: 'Username, password, and email confirmation are required.' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
+  }
+
+  try {
+    let verifiedEmail = email ? email.trim().toLowerCase() : null;
+
+    // Verify token with Supabase if token provided
+    if (accessToken) {
+      try {
+        const verified = await verifySupabaseAccessToken(accessToken);
+        if (verified && verified.email) {
+          verifiedEmail = verified.email;
+        }
+      } catch (e) {
+        // Fallback: decode JWT payload if direct validation failed
+        const decoded = jwt.decode(accessToken);
+        if (decoded && decoded.email) {
+          verifiedEmail = decoded.email.toLowerCase();
+        } else {
+          return res.status(400).json({ success: false, message: 'Invalid or expired confirmation link: ' + e.message });
+        }
+      }
+    }
+
+    if (!verifiedEmail) {
+      return res.status(400).json({ success: false, message: 'Could not determine verified email.' });
+    }
+
+    const cleanUsername = username.trim();
+
+    // 1. Mandatory Rule: Email MUST exist in Gen_Employee
+    const [empRows] = await pool.query(
+      `SELECT ecode_nu, empname_vc FROM Gen_Employee WHERE LOWER(email_vc) = ?`,
+      [verifiedEmail]
+    );
+
+    if (empRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'This email ID does not present in our database. Only registered Gulf Consult employees can create an account. Please contact HR.',
+      });
+    }
+
+    const ecodeNu = empRows[0].ecode_nu;
+
+    // 2. Mandatory Rule: Check if employee already has an account
+    const [existingAccount] = await pool.query(
+      `SELECT user_id, username_vc FROM Sec_Users WHERE ecode_nu = ?`,
+      [ecodeNu]
+    );
+
+    if (existingAccount.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `An account (${existingAccount[0].username_vc}) is already activated for this employee. Please log in directly.`,
+      });
+    }
+
+    // 3. Ensure username uniqueness
+    const [existingUser] = await pool.query(
+      `SELECT user_id FROM Sec_Users WHERE LOWER(username_vc) = LOWER(?)`,
+      [cleanUsername]
+    );
+
+    if (existingUser.length > 0) {
+      return res.status(400).json({ success: false, message: `Username "${cleanUsername}" is already taken. Please choose another.` });
+    }
+
+    // 4. Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 5. Insert active login account
+    const [insertResult] = await pool.query(
+      `INSERT INTO Sec_Users (ecode_nu, username_vc, password_vc, role_vc, active_int, crby_vc)
+       VALUES (?, ?, ?, 'Employee', 1, 'Email Link Activation')`,
+      [ecodeNu, cleanUsername, hashedPassword]
+    );
+
+    // 6. Generate ERP Session Token
+    const token = jwt.sign(
+      {
+        user_id: insertResult.insertId,
+        ecode_nu: ecodeNu,
+        username_vc: cleanUsername,
+        role_vc: 'Employee',
+        empname_vc: empRows[0].empname_vc,
+        email_vc: verifiedEmail,
+      },
+      process.env.JWT_SECRET || 'gc_erp_super_secret_jwt_key_2026_balaji',
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: 'Account activated successfully! Logging you in...',
+      token,
+      user: {
+        user_id: insertResult.insertId,
+        ecode_nu: ecodeNu,
+        username_vc: cleanUsername,
+        empname_vc: empRows[0].empname_vc,
+        email_vc: verifiedEmail,
+        role_vc: 'Employee',
+        company_name: 'Gulf Consult',
+      },
+    });
+  } catch (err) {
+    console.error('Link registration error:', err);
+    return res.status(500).json({ success: false, message: 'Registration failed: ' + err.message });
+  }
+};
+
 
 exports.verifyOtp = async (req, res) => {
   const { username, otp } = req.body;

@@ -33,6 +33,40 @@ export default function Login() {
   const [infoMessage, setInfoMessage] = useState('');
   const [codeSent, setCodeSent] = useState(false);
 
+  // Supabase Click-to-Verify Email Link State
+  const [emailLinkConfirmed, setEmailLinkConfirmed] = useState(false);
+  const [confirmedEmail, setConfirmedEmail] = useState('');
+  const [supabaseAccessToken, setSupabaseAccessToken] = useState('');
+
+  // Detect email link confirmation callback from Supabase
+  React.useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && (hash.includes('access_token=') || hash.includes('type=signup') || hash.includes('type=magiclink'))) {
+      const params = new URLSearchParams(hash.replace(/^#/, ''));
+      const token = params.get('access_token');
+      if (token) {
+        setSupabaseAccessToken(token);
+        try {
+          const payloadBase64 = token.split('.')[1];
+          const payload = JSON.parse(atob(payloadBase64));
+          if (payload && payload.email) {
+            setConfirmedEmail(payload.email);
+            setSignUpData((prev) => ({
+              ...prev,
+              email: payload.email,
+              username: prev.username || payload.email.split('@')[0],
+            }));
+            setEmailLinkConfirmed(true);
+            setIsRightPanelActive(true);
+            setInfoMessage(`✅ Official email verified: ${payload.email}! Please set your username and password below to activate your account.`);
+          }
+        } catch (e) {
+          console.error('Failed to parse token payload:', e);
+        }
+      }
+    }
+  }, []);
+
   // Quick 1-click Demo credentials
   const setDemoUser = (user, pass) => {
     setSignInData({ username: user, password: pass });
@@ -97,6 +131,18 @@ export default function Login() {
       if (signUpData.password.length < 6) {
         throw new Error('Password must be at least 6 characters long.');
       }
+      if (emailLinkConfirmed) {
+        await api.completeLinkRegistration({
+          username: signUpData.username,
+          password: signUpData.password,
+          accessToken: supabaseAccessToken,
+          email: confirmedEmail || signUpData.email,
+        });
+        await login(signUpData.username, signUpData.password);
+        navigate('/dashboard');
+        return;
+      }
+
       if (!signUpData.code) {
         throw new Error('Please enter the 6-digit verification code sent to your email.');
       }
@@ -155,8 +201,16 @@ export default function Login() {
             </div>
 
             <span style={{ fontSize: '11px', color: '#475569', textAlign: 'center', lineHeight: '1.4' }}>
-              Registered employees only: enter your official corporate email to receive your OTP and set your password.
+              {emailLinkConfirmed
+                ? 'Official email confirmed! Complete your username & password to finish activation.'
+                : 'Registered employees only: enter your official corporate email to receive your verification email and set your password.'}
             </span>
+
+            {emailLinkConfirmed && (
+              <div style={{ background: '#ecfdf5', color: '#065f46', padding: '6px 12px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', margin: '4px 0', border: '1px solid #a7f3d0', width: '100%', boxSizing: 'border-box', textAlign: 'center' }}>
+                ✅ Verified: {confirmedEmail || signUpData.email}
+              </div>
+            )}
 
             {error && isRightPanelActive && (
               <span style={{ color: '#e11d48', fontSize: '11px', margin: '2px 0' }}>{error}</span>
@@ -172,6 +226,7 @@ export default function Login() {
             <input
               type="email"
               required
+              disabled={emailLinkConfirmed}
               placeholder="Official Email"
               value={signUpData.email}
               onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
@@ -195,22 +250,27 @@ export default function Login() {
               <span style={{ color: '#059669', fontSize: '11px', margin: '2px 0' }}>{infoMessage}</span>
             )}
 
-            <button type="button" id="send_code" onClick={handleSendCode} disabled={sendingCode}>
-              {sendingCode ? 'Sending OTP...' : codeSent ? 'Resend Code' : 'Send Code'}
-            </button>
+            {!emailLinkConfirmed && (
+              <>
+                <button type="button" id="send_code" onClick={handleSendCode} disabled={sendingCode}>
+                  {sendingCode ? 'Sending Verification...' : codeSent ? 'Resend Verification' : 'Send Verification'}
+                </button>
 
-            <input
-              type="text"
-              placeholder="Verification Code"
-              value={signUpData.code}
-              onChange={(e) => setSignUpData({ ...signUpData, code: e.target.value })}
-            />
+                <input
+                  type="text"
+                  placeholder="Verification Code (optional if clicked link)"
+                  value={signUpData.code}
+                  onChange={(e) => setSignUpData({ ...signUpData, code: e.target.value })}
+                />
+              </>
+            )}
 
             <button type="submit" disabled={loading}>
-              {loading ? '...' : 'Register'}
+              {loading ? '...' : emailLinkConfirmed ? 'Activate ERP Account & Login' : 'Register'}
             </button>
           </form>
         </div>
+
 
         {/* ==================== 2. SIGN IN FORM ==================== */}
         <div className="form-container sign-in-container">

@@ -89,8 +89,40 @@ const verifySupabaseOtp = async (email, token) => {
   return { success: true, user: data.user, session: data.session };
 };
 
+/**
+ * Validates a Supabase access token returned when user clicks the confirmation link in email.
+ * Extracts and confirms the user's verified email address.
+ */
+const verifySupabaseAccessToken = async (accessToken) => {
+  const config = getSupabaseConfig();
+  if (!config) {
+    return null;
+  }
+
+  const response = await fetch(`${config.url}/auth/v1/user`, {
+    method: 'GET',
+    headers: {
+      'apikey': config.key,
+      'Authorization': `Bearer ${accessToken.trim()}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data.email) {
+    const errorMsg = data.msg || data.message || 'Invalid or expired confirmation link';
+    console.error('❌ Supabase token verification failed:', errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  console.log(`✅ [Supabase Cloud Auth] Link confirmed email for ${data.email}`);
+  return { success: true, email: data.email.toLowerCase(), user: data };
+};
+
 module.exports = {
   getSupabaseConfig,
   sendSupabaseOtp,
   verifySupabaseOtp,
+  verifySupabaseAccessToken,
 };
+

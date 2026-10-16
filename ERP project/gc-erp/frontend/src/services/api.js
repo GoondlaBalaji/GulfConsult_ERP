@@ -53,6 +53,20 @@ export const api = {
     return data;
   },
 
+  async completeLinkRegistration(formData) {
+    const res = await fetch(`${API_BASE_URL}/auth/complete-link-registration`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Email link activation failed.');
+    if (data.token) {
+      localStorage.setItem('gc_erp_token', data.token);
+    }
+    return data;
+  },
+
   async verifyOtp(username, otp) {
     const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
       method: 'POST',
