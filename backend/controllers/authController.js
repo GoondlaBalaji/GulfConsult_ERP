@@ -1,8 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/db');
-const { sendOtpEmail } = require('../services/emailService');
-const { sendSupabaseOtp, verifySupabaseOtp, verifySupabaseAccessToken } = require('../services/supabaseAuthService');
+const { sendSupabaseOtp, verifySupabaseOtp, verifySupabaseAccessToken, getSupabaseConfig } = require('../services/supabaseAuthService');
 
 // In-memory OTP storage for 2FA verification & Registration
 const otpStore = new Map();
@@ -155,7 +154,7 @@ exports.sendRegisterOtp = async (req, res) => {
     }
 
     // 3. Dispatch OTP via Supabase Cloud Auth (if configured) or Resend / fallback
-    if (process.env.SUPABASE_URL && (process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+    if (getSupabaseConfig()) {
       await sendSupabaseOtp(cleanEmail);
     } else {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -196,7 +195,7 @@ exports.register = async (req, res) => {
   const cleanUsername = username.trim();
 
   // Validate OTP code via Supabase (if configured) or in-memory store
-  if (process.env.SUPABASE_URL && (process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+  if (getSupabaseConfig()) {
     try {
       await verifySupabaseOtp(cleanEmail, code);
     } catch (err) {

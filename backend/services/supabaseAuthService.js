@@ -5,8 +5,8 @@
  */
 
 const getSupabaseConfig = () => {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const url = process.env.SUPABASE_URL || 'https://suesvafccgooctddnfti.supabase.co';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'sb_publishable_x3jEcGuMfgRrAr_FLVfR8A_yumk0mj4';
 
   if (!url || !key) {
     return null;
@@ -18,6 +18,7 @@ const getSupabaseConfig = () => {
     key: key.trim(),
   };
 };
+
 
 /**
  * Dispatches a 6-digit OTP code to ANY email address using Supabase Cloud Auth.
