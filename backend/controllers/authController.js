@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/db');
 const { sendOtpEmail } = require('../services/emailService');
+const { sendSupabaseOtp, verifySupabaseOtp } = require('../services/supabaseAuthService');
 
 // In-memory OTP storage for 2FA verification & Registration
 const otpStore = new Map();
@@ -153,15 +154,17 @@ exports.sendRegisterOtp = async (req, res) => {
       });
     }
 
-    // 3. Generate 6-digit OTP code
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore.set(cleanEmail, {
-      otp,
-      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes expiry
-    });
-
-    // 4. Send real email via Resend
-    await sendOtpEmail(cleanEmail, otp, 'registration');
+    // 3. Dispatch OTP via Supabase Cloud Auth (if configured) or Resend / fallback
+    if (process.env.SUPABASE_URL && (process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+      await sendSupabaseOtp(cleanEmail);
+    } else {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      otpStore.set(cleanEmail, {
+        otp,
+        expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes expiry
+      });
+      await sendOtpEmail(cleanEmail, otp, 'registration');
+    }
 
     return res.json({
       success: true,
@@ -192,12 +195,19 @@ exports.register = async (req, res) => {
   const cleanEmail = email.trim().toLowerCase();
   const cleanUsername = username.trim();
 
-  // Validate OTP code
-  const stored = otpStore.get(cleanEmail);
-  const isMatch = (stored && stored.otp === code.trim() && Date.now() < stored.expiresAt) || code.trim() === '882196' || code.trim() === '123456';
-
-  if (!isMatch) {
-    return res.status(400).json({ success: false, message: 'Invalid or expired verification code.' });
+  // Validate OTP code via Supabase (if configured) or in-memory store
+  if (process.env.SUPABASE_URL && (process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+    try {
+      await verifySupabaseOtp(cleanEmail, code);
+    } catch (err) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired verification code: ' + err.message });
+    }
+  } else {
+    const stored = otpStore.get(cleanEmail);
+    const isMatch = (stored && stored.otp === code.trim() && Date.now() < stored.expiresAt) || code.trim() === '882196' || code.trim() === '123456';
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired verification code.' });
+    }
   }
 
   try {
