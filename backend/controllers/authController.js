@@ -15,14 +15,17 @@ exports.login = async (req, res) => {
 
   try {
     const cleanUser = username.trim();
+    const isNum = !isNaN(cleanUser) && cleanUser !== '' && !cleanUser.includes('@');
     const [rows] = await pool.query(
       `SELECT u.user_id, u.ecode_nu, u.username_vc, u.password_vc, u.role_vc, u.active_int,
               e.empname_vc, e.email_vc, e.mobile_vc, c.cname_vc AS company_name
        FROM Sec_Users u
        LEFT JOIN Gen_Employee e ON u.ecode_nu = e.ecode_nu
        LEFT JOIN Gen_Company c ON e.ccode_int = c.ccode_int
-       WHERE LOWER(u.username_vc) = LOWER(?) OR LOWER(e.email_vc) = LOWER(?)`,
-      [cleanUser, cleanUser]
+       WHERE LOWER(u.username_vc) = LOWER(?) 
+          OR LOWER(e.email_vc) = LOWER(?)
+          OR u.ecode_nu = ?`,
+      [cleanUser, cleanUser, isNum ? parseInt(cleanUser, 10) : -1]
     );
 
     if (rows.length === 0) {
@@ -39,12 +42,29 @@ exports.login = async (req, res) => {
         } else {
           return res.status(400).json({
             success: false,
-            message: 'Your employee record is in our database, but your login password is not set yet. Please click "Sign Up" to activate your account with OTP.',
+            message: `Employee ID #${empCheck[0].ecode_nu} found in database, but your login password is not set yet. Please click "Sign Up" to activate your account.`,
+          });
+        }
+      } else if (isNum) {
+        const [empCheck] = await pool.query(
+          'SELECT ecode_nu FROM Gen_Employee WHERE ecode_nu = ?',
+          [parseInt(cleanUser, 10)]
+        );
+        if (empCheck.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: `Employee ID #${cleanUser} does not present in our database. Please contact HR.`,
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: `Employee ID #${cleanUser} found in database, but your login password is not set yet. Please click "Sign Up" to activate your account.`,
           });
         }
       }
-      return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+      return res.status(401).json({ success: false, message: 'Invalid username, Employee ID, or password.' });
     }
+
 
     const user = rows[0];
 
@@ -114,31 +134,46 @@ exports.login = async (req, res) => {
   }
 };
 
-// Send real Email OTP during registration
 exports.sendRegisterOtp = async (req, res) => {
-  const { email } = req.body;
+  const { email, ecode } = req.body;
 
-  if (!email || !email.includes('@')) {
-    return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
+  if (!email && !ecode) {
+    return res.status(400).json({ success: false, message: 'Please provide your Official Email or Employee ID.' });
   }
 
-  const cleanEmail = email.trim().toLowerCase();
-
   try {
-    // 1. Mandatory Enterprise Rule: Email MUST already exist in the HR Gen_Employee database
-    const [empRows] = await pool.query(
-      `SELECT ecode_nu, empname_vc FROM Gen_Employee WHERE LOWER(email_vc) = ?`,
-      [cleanEmail]
-    );
+    let employee = null;
+    let cleanEmail = null;
 
-    if (empRows.length === 0) {
+    if (email && email.includes('@')) {
+      cleanEmail = email.trim().toLowerCase();
+      const [empRows] = await pool.query(
+        `SELECT ecode_nu, empname_vc, email_vc FROM Gen_Employee WHERE LOWER(email_vc) = ?`,
+        [cleanEmail]
+      );
+      if (empRows.length > 0) employee = empRows[0];
+    } else {
+      const rawCode = ecode || email;
+      const targetEcode = parseInt(String(rawCode).replace(/\D/g, ''), 10);
+      if (!isNaN(targetEcode)) {
+        const [empRows] = await pool.query(
+          `SELECT ecode_nu, empname_vc, email_vc FROM Gen_Employee WHERE ecode_nu = ?`,
+          [targetEcode]
+        );
+        if (empRows.length > 0) {
+          employee = empRows[0];
+          cleanEmail = employee.email_vc ? employee.email_vc.toLowerCase() : null;
+        }
+      }
+    }
+
+    if (!employee || !cleanEmail) {
       return res.status(404).json({
         success: false,
-        message: 'This email ID does not present in our database. Only registered Gulf Consult employees can create an account. Please contact HR.',
+        message: 'Employee ID or Official Email does not present in our database. Only registered Gulf Consult employees can create an account. Please contact HR.',
       });
     }
 
-    const employee = empRows[0];
 
     // 2. Check if this employee already has an account in Sec_Users
     const [existingUser] = await pool.query(
@@ -167,8 +202,12 @@ exports.sendRegisterOtp = async (req, res) => {
 
     return res.json({
       success: true,
-      message: `Verification code sent to ${cleanEmail}. Please check your inbox.`,
+      message: `Verification dispatched to ${cleanEmail}. Welcome, ${employee.empname_vc} (Employee ID: #${employee.ecode_nu})! Please check your inbox.`,
+      ecode_nu: employee.ecode_nu,
+      empname_vc: employee.empname_vc,
+      email_vc: cleanEmail,
     });
+
   } catch (err) {
     console.error('Error sending registration OTP:', err);
     return res.status(500).json({ success: false, message: 'Failed to send verification code. ' + err.message });

@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { sendWelcomeEmployeeEmail } = require('../services/emailService');
 
 exports.getAllEmployees = async (req, res) => {
   try {
@@ -121,11 +122,24 @@ exports.createEmployee = async (req, res) => {
       ]
     );
 
+    const newEcodeNu = result.insertId;
+
+    // Automated Solution 2: Send onboarding email informing employee of their new Employee ID
+    sendWelcomeEmployeeEmail({
+      toEmail: cleanEmail,
+      empName: empname_vc,
+      ecodeNu: newEcodeNu,
+      jobTitle: req.body.jtitle_vc || 'Staff Member',
+    }).catch((mailErr) => {
+      console.error('Failed to dispatch welcome onboarding email:', mailErr.message);
+    });
+
     return res.status(201).json({
       success: true,
-      message: 'Employee created successfully.',
-      ecode_nu: result.insertId,
+      message: 'Employee created successfully and welcome email dispatched.',
+      ecode_nu: newEcodeNu,
     });
+
   } catch (err) {
     console.error('Error creating employee:', err);
     if (err.code === 'ER_DUP_ENTRY') {

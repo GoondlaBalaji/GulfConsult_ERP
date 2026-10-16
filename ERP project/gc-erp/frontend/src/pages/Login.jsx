@@ -38,8 +38,23 @@ export default function Login() {
   const [confirmedEmail, setConfirmedEmail] = useState('');
   const [supabaseAccessToken, setSupabaseAccessToken] = useState('');
 
-  // Detect email link confirmation callback from Supabase
+  // Detect email link confirmation callback from Supabase or onboarding welcome link
   React.useEffect(() => {
+    // 1. Check query parameters (e.g. from Onboarding Welcome Email ?ecode=1041&email=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const ecodeParam = urlParams.get('ecode');
+    const emailParam = urlParams.get('email');
+    if (ecodeParam || emailParam) {
+      setIsRightPanelActive(true);
+      setSignUpData((prev) => ({
+        ...prev,
+        email: emailParam || prev.email,
+        username: emailParam ? emailParam.split('@')[0] : prev.username,
+      }));
+      setInfoMessage(`👋 Welcome to Gulf Consult! Employee ID: #${ecodeParam || ''}. Click "Send Verification" to activate your account.`);
+    }
+
+    // 2. Check hash for Supabase Click-to-Verify link
     const hash = window.location.hash;
     if (hash && (hash.includes('access_token=') || hash.includes('type=signup') || hash.includes('type=magiclink'))) {
       const params = new URLSearchParams(hash.replace(/^#/, ''));
@@ -67,6 +82,7 @@ export default function Login() {
     }
   }, []);
 
+
   // Quick 1-click Demo credentials
   const setDemoUser = (user, pass) => {
     setSignInData({ username: user, password: pass });
@@ -91,10 +107,11 @@ export default function Login() {
   };
 
   // Send Real Verification Code via Email
+  // Send Real Verification Code via Email or Employee ID
   const handleSendCode = async (e) => {
     e.preventDefault();
-    if (!signUpData.email || !signUpData.email.includes('@')) {
-      setError('Please enter a valid official email first.');
+    if (!signUpData.email) {
+      setError('Please enter your Official Email or Employee ID first.');
       return;
     }
     setError('');
@@ -104,15 +121,22 @@ export default function Login() {
     try {
       const res = await api.sendRegisterOtp(signUpData.email);
       setCodeSent(true);
-      setInfoMessage('Verification code sent to your email! Please check your Inbox (or Spam/Junk folder).');
-      // Always keep the code blank so the user types the code received in their email
-      setSignUpData((prev) => ({ ...prev, code: '' }));
+      if (res.ecode_nu) {
+        setInfoMessage(res.message || `Verification dispatched to ${res.email_vc}! (Employee ID: #${res.ecode_nu})`);
+        if (res.email_vc) {
+          setSignUpData((prev) => ({ ...prev, email: res.email_vc, code: '' }));
+        }
+      } else {
+        setInfoMessage(res.message || 'Verification code sent to your email! Please check your Inbox (or Spam/Junk folder).');
+        setSignUpData((prev) => ({ ...prev, code: '' }));
+      }
     } catch (err) {
       setError(err.message || 'Failed to dispatch verification email.');
     } finally {
       setSendingCode(false);
     }
   };
+
 
   // Sign Up Submit
   const handleSignUp = async (e) => {
@@ -342,10 +366,11 @@ export default function Login() {
             <input
               type="text"
               required
-              placeholder="Username"
+              placeholder="Employee ID / Official Email / Username"
               value={signInData.username}
               onChange={(e) => setSignInData({ ...signInData, username: e.target.value })}
             />
+
             <input
               type="password"
               required
